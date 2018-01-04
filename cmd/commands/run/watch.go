@@ -47,7 +47,7 @@ var (
 )
 
 // NewWatcher starts an fsnotify Watcher on the specified paths
-func NewWatcher(paths []string, files []string, isgenerate bool) {
+func NewWatcher(paths []string, files []string, isgenerate, isbuildlinux bool) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		beeLogger.Log.Fatalf("Failed to create watcher: %s", err)
@@ -105,7 +105,7 @@ func NewWatcher(paths []string, files []string, isgenerate bool) {
 }
 
 // AutoBuild builds the specified set of files
-func AutoBuild(files []string, isgenerate bool) {
+func AutoBuild(files []string, isgenerate, isbuildlinux bool) {
 	state.Lock()
 	defer state.Unlock()
 
@@ -161,6 +161,28 @@ func AutoBuild(files []string, isgenerate bool) {
 			utils.Notify(stderr.String(), "Build Failed")
 			beeLogger.Log.Errorf("Failed to build the application: %s", stderr.String())
 			return
+		}
+
+		if isbuildlinux {
+			appName := appname + ".linux"
+
+			args := []string{"build"}
+			args = append(args, "-o", appName)
+			if buildTags != "" {
+				args = append(args, "-tags", buildTags)
+			}
+			args = append(args, files...)
+
+			bcmd := exec.Command(cmdName, args...)
+			bcmd.Env = append(os.Environ(), "GOGC=off", "GOARCH=amd64", "GOOS=linux")
+
+			bcmd.Stderr = &stderr
+			err = bcmd.Run()
+			if err != nil {
+				utils.Notify(stderr.String(), "Build linux Failed")
+				beeLogger.Log.Errorf("Failed to build the linux application: %s", stderr.String())
+				return
+			}
 		}
 	}
 

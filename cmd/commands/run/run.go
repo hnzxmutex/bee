@@ -28,7 +28,7 @@ import (
 )
 
 var CmdRun = &commands.Command{
-	UsageLine: "run [appname] [watchall] [-main=*.go] [-downdoc=true]  [-gendoc=true] [-vendor=true] [-e=folderToExclude] [-ex=extraPackageToWatch] [-tags=goBuildTags] [-runmode=BEEGO_RUNMODE]",
+	UsageLine: "run [appname] [watchall] [-main=*.go] [-downdoc=true] [-buildlinux=true] [-gendoc=true] [-vendor=true] [-e=folderToExclude] [-ex=extraPackageToWatch] [-tags=goBuildTags] [-runmode=BEEGO_RUNMODE]",
 	Short:     "Run the application by starting a local development server",
 	Long: `
 Run command will supervise the filesystem of the application for any changes, and recompile/restart it.
@@ -39,9 +39,10 @@ Run command will supervise the filesystem of the application for any changes, an
 }
 
 var (
-	mainFiles utils.ListOpts
-	downdoc   utils.DocValue
-	gendoc    utils.DocValue
+	mainFiles  utils.ListOpts
+	downdoc    utils.DocValue
+	gendoc     utils.DocValue
+	buildlinux utils.DocValue
 	// The flags list of the paths excluded from watching
 	excludedPaths utils.StrFlags
 	// Pass through to -tags arg of "go build"
@@ -168,13 +169,9 @@ func RunApp(cmd *commands.Command, args []string) int {
 	if config.Conf.EnableReload {
 		startReloadServer()
 	}
-	if gendoc == "true" {
-		NewWatcher(paths, files, true)
-		AutoBuild(files, true)
-	} else {
-		NewWatcher(paths, files, false)
-		AutoBuild(files, false)
-	}
+
+	NewWatcher(paths, files, gendoc == "true", buildlinux == "true")
+	AutoBuild(files, gendoc == "true", buildlinux == "true")
 
 	for {
 		<-exit
