@@ -85,7 +85,7 @@ func NewWatcher(paths []string, files []string, isgenerate, isbuildlinux bool) {
 						// Wait 1s before autobuild until there is no file change.
 						scheduleTime = time.Now().Add(1 * time.Second)
 						time.Sleep(scheduleTime.Sub(time.Now()))
-						AutoBuild(files, isgenerate)
+						AutoBuild(files, isgenerate, isbuildlinux)
 					}()
 				}
 			case err := <-watcher.Errors:
