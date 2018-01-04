@@ -39,10 +39,11 @@ Run command will supervise the filesystem of the application for any changes, an
 }
 
 var (
-	mainFiles  utils.ListOpts
-	downdoc    utils.DocValue
-	gendoc     utils.DocValue
-	buildlinux utils.DocValue
+	mainFiles utils.ListOpts
+	downdoc   utils.DocValue
+	gendoc    utils.DocValue
+	//build the linux application at the same time
+	buildlinux bool
 	// The flags list of the paths excluded from watching
 	excludedPaths utils.StrFlags
 	// Pass through to -tags arg of "go build"
@@ -70,6 +71,7 @@ func init() {
 	CmdRun.Flag.Var(&downdoc, "downdoc", "Enable auto-download of the swagger file if it does not exist.")
 	CmdRun.Flag.Var(&excludedPaths, "e", "List of paths to exclude.")
 	CmdRun.Flag.BoolVar(&vendorWatch, "vendor", false, "Enable watch vendor folder.")
+	CmdRun.Flag.BoolVar(&buildlinux, "buildlinux", false, "Build the linux application at the same time.")
 	CmdRun.Flag.StringVar(&buildTags, "tags", "", "Set the build tags. See: https://golang.org/pkg/go/build/")
 	CmdRun.Flag.StringVar(&runmode, "runmode", "", "Set the Beego run mode.")
 	CmdRun.Flag.Var(&extraPackages, "ex", "List of extra package to watch.")
@@ -170,8 +172,8 @@ func RunApp(cmd *commands.Command, args []string) int {
 		startReloadServer()
 	}
 
-	NewWatcher(paths, files, gendoc == "true", buildlinux == "true")
-	AutoBuild(files, gendoc == "true", buildlinux == "true")
+	NewWatcher(paths, files, gendoc == "true", buildlinux)
+	AutoBuild(files, gendoc == "true", buildlinux)
 
 	for {
 		<-exit
